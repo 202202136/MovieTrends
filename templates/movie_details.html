@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ movie.title }}</title>
+</head>
+<body>
+<h1>{{ movie.title }}</h1>
+<p><strong>Release Date:</strong> {{ movie.release_date }}</p>
+<p><strong>Overview:</strong> {{ movie.overview }}</p>
+<p><strong>Rating:</strong> {{ movie.vote_average }}</p>
+{% if movie.poster_path %}
+    <img src="https://image.tmdb.org/t/p/w300{{ movie.poster_path }}" alt="Poster">
+{% endif %}
+<h2>Trailer</h2>
+{% if trailer_key %}
+    <iframe width="560" height="315"
+            src="https://www.youtube.com/embed/{{ trailer_key }}"
+            frameborder="0" allowfullscreen>
+    </iframe>
+{% else %}
+    <p><strong>Trailer not found</strong></p>
+{% endif %}
+<br><br>
+<a href="/">Back</a>
+</body>
+</html>
