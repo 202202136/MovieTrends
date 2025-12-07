@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card bg-secondary text-light">
+    <div class="row g-0">
+        <div class="col-md-4 p-3 d-flex align-items-start justify-content-center">
+            {% if movie.get_poster_url() or movie.poster_path %}
+                <img src="{{ movie.get_poster_url() if movie.get_poster_url() else ('https://image.tmdb.org/t/p/w300' + movie.poster_path) }}" alt="{{ movie.title }} poster" class="img-fluid rounded">
+            {% else %}
+                <div class="bg-dark text-center text-muted p-5 rounded" style="min-width:220px;">
+                    No Image
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-md-8 p-4">
+            <h2 class="mb-1">{{ movie.title }}</h2>
+            <div class="mb-2">
+                <span class="badge bg-primary me-2">Rating: {{ movie.vote_average or movie.rating }}</span>
+                <small class="text-muted">Release: {{ movie.release_date }}</small>
+            </div>
+
+            <h5 class="mt-3">Overview</h5>
+            <p>{{ movie.overview }}</p>
+
+            <h5 class="mt-4">Trailer</h5>
+            {% if trailer_key %}
+                <div class="ratio ratio-16x9">
+                    <iframe src="https://www.youtube.com/embed/{{ trailer_key }}" title="Trailer for {{ movie.title }}" allowfullscreen></iframe>
+                </div>
+            {% else %}
+                <p class="text-muted">Trailer not available.</p>
+            {% endif %}
+
+            <div class="mt-4">
+                <a href="/movies" class="btn btn-outline-light">Back to Movies</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
