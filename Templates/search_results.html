@@ -14,7 +14,11 @@
           <div class="card-body p-2">
             <h6 class="card-title mb-1" style="font-size: 0.85rem;">{{ m.title or m.name }}</h6>
             <p class="mb-0" style="font-size: 0.75rem;">⭐ {{ m.vote_average or m.vote_count }}</p>
-            <a href="/movie/{{ m.id }}" class="stretched-link"></a>
+            {% if m.media_type == 'tv' %}
+              <a href="/tv/{{ m.id }}" class="stretched-link"></a>
+            {% else %}
+              <a href="/movie/{{ m.id }}" class="stretched-link"></a>
+            {% endif %}
           </div>
         </div>
       </div>
