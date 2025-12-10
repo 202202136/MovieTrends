@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Filter Section -->
+    <div class="filter-section mb-4 p-3 bg-light rounded">
+        <h2 class="mb-3">Filter by Category</h2>
+        <form method="GET" action="/movies" class="d-flex gap-2 flex-wrap">
+            <button type="submit" name="category" value="" class="btn btn-outline-primary {% if not category or category == '' %}active{% endif %}">
+                All
+            </button>
+            <button type="submit" name="category" value="Movie" class="btn btn-outline-primary {% if category == 'Movie' %}active{% endif %}">
+                Movies
+            </button>
+            <button type="submit" name="category" value="Series" class="btn btn-outline-primary {% if category == 'Series' %}active{% endif %}">
+                TV Series
+            </button>
+            <button type="submit" name="category" value="Cartoon" class="btn btn-outline-primary {% if category == 'Cartoon' %}active{% endif %}">
+                Cartoons
+            </button>
+        </form>
+    </div>
+
+    <!-- Movies Section -->
+    <div class="movies-section">
+        <h2 class="mb-3">
+            {% if category %}
+                Trending {{ category }}
+            {% else %}
+                Trending Movies & TV Shows
+            {% endif %}
+        </h2>
+
+        {% if movies %}
+        <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+            {% for movie in movies %}
+            <div class="col movie-item">
+                <div class="card h-100 movie-card">
+                    {% if movie.poster_path %}
+                    <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" class="card-img-top" alt="{{ movie.title or movie.name }}">
+                    {% else %}
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 300px;">
+                        <span class="text-white">No image available</span>
+                    </div>
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ movie.title or movie.name }}</h5>
+                        <p class="card-text flex-grow-1">
+                            {% if movie.release_date %}
+                            Release Date: {{ movie.release_date }}
+                            {% elif movie.first_air_date %}
+                            First Air Date: {{ movie.first_air_date }}
+                            {% endif %}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <span class="badge bg-primary">Rating: {{ movie.vote_average }}</span>
+                            {% if movie.media_type == 'tv' %}
+                                <a href="{{ url_for('movie_bp.tv_show_details', tv_show_id=movie.id) }}" class="btn btn-outline-primary btn-sm">Details</a>
+                            {% else %}
+                                <a href="{{ url_for('movie_bp.movie_details', movie_id=movie.id) }}" class="btn btn-outline-primary btn-sm">Details</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            No movies found. Try a different filter.
+        </div>
+        {% endif %}
+
+        <!-- Pagination -->
+        {% if total_pages and total_pages > 1 %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <!-- Previous Button -->
+                {% if current_page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=current_page - 1) }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">&laquo;</span>
+                </li>
+                {% endif %}
+
+                <!-- Page Numbers -->
+                {% set start_page = [current_page - 3, 1] | max %}
+                {% set end_page = [current_page + 3, total_pages] | min %}
+                
+                {% if start_page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=1) }}">1</a>
+                </li>
+                {% if start_page > 2 %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+                {% endif %}
+
+                {% for p in range(start_page, end_page + 1) %}
+                <li class="page-item {% if p == current_page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=p) }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+
+                {% if end_page < total_pages %}
+                {% if end_page < total_pages - 1 %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=total_pages) }}">{{ total_pages }}</a>
+                </li>
+                {% endif %}
+
+                <!-- Next Button -->
+                {% if current_page < total_pages %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=current_page + 1) }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">&raquo;</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

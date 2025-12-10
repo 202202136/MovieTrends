@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Search results{% if query %} for "{{ query }}"{% endif %}</h2>
+
+    {% if movies %}
+  <div class="row g-3">
+    {% for m in movies %}
+      <div class="col-6 col-md-3 col-lg-2">
+        <div class="card h-100 bg-secondary text-light">
+          {% if m.poster_path %}
+            <img src="https://image.tmdb.org/t/p/w500{{ m.poster_path }}" class="card-img-top" alt="{{ m.title or m.name }}">
+          {% endif %}
+          <div class="card-body p-2">
+            <h6 class="card-title mb-1" style="font-size: 0.85rem;">{{ m.title or m.name }}</h6>
+            <p class="mb-0" style="font-size: 0.75rem;">⭐ {{ m.vote_average or m.vote_count }}</p>
+            {% if m.media_type == 'tv' %}
+              <a href="/tv/{{ m.id }}" class="stretched-link"></a>
+            {% else %}
+              <a href="/movie/{{ m.id }}" class="stretched-link"></a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-info">No results found. Try a different query.</div>
+{% endif %}
+
+{% endblock %}
