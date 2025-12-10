@@ -1,0 +1,25 @@
+from flask import Flask
+from controllers.home_controller import home_blueprint
+from controllers.movie_controller import movie_bp  #routes in movie_controller are active
+
+
+def create_app():
+    app = Flask(
+        __name__,
+        template_folder="Templates", 
+        static_folder="static"
+    )
+
+    app.register_blueprint(home_blueprint)
+    app.register_blueprint(movie_bp)  #routes in movie_controller are active
+
+    return app
+
+
+
+
+
+if __name__ == "__main__":
+    app = create_app()
+    
+    app.run(debug=True, port=5001)

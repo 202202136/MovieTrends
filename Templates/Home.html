@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="mb-4">Trending Movies</h1>
+
+<div class="row g-3">
+    {% for movie in movies %}
+        <div class="col-6 col-md-3 col-lg-2">
+            <div class="card h-100 bg-secondary text-light">
+                {% if movie.get_poster_url() %}
+                    <img src="{{ movie.get_poster_url() }}"
+                         class="card-img-top"
+                         alt="{{ movie.title }}">
+                {% endif %}
+                <div class="card-body p-2">
+                    <h6 class="card-title mb-1" style="font-size: 0.85rem;">
+                        {{ movie.title }}
+                    </h6>
+                    <p class="mb-0" style="font-size: 0.75rem;">
+                        ⭐ {{ movie.rating }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
