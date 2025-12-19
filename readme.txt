@@ -1,0 +1,1 @@
+Added a sign up and log in page that use flask sessions to track the current user. Usernames and passwords are stored in an sqlite database, with passwords being hashed first.
