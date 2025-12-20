@@ -2,7 +2,6 @@
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Filter Section -->
     <div class="filter-section mb-4 p-3 bg-light rounded">
         <h2 class="mb-3">Filter by Category</h2>
         <form method="GET" action="/movies" class="d-flex gap-2 flex-wrap">
@@ -21,7 +20,6 @@
         </form>
     </div>
 
-    <!-- Movies Section -->
     <div class="movies-section">
         <h2 class="mb-3">
             {% if category %}
@@ -54,6 +52,11 @@
                         </p>
                         <div class="d-flex justify-content-between align-items-center mt-auto">
                             <span class="badge bg-primary">Rating: {{ movie.vote_average }}</span>
+                            <form action="/add_to_watchlist" method="POST" class="d-inline-block">
+                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                <input type="hidden" name="movie_id" value="{{ movie.id }}">
+                                <button type="submit" class="btn btn-primary btn-sm">Add to Watchlist</button>
+                            </form>
                             {% if movie.media_type == 'tv' %}
                                 <a href="{{ url_for('movie_bp.tv_show_details', tv_show_id=movie.id) }}" class="btn btn-outline-primary btn-sm">Details</a>
                             {% else %}
@@ -71,11 +74,9 @@
         </div>
         {% endif %}
 
-        <!-- Pagination -->
         {% if total_pages and total_pages > 1 %}
         <nav aria-label="Page navigation" class="mt-4">
             <ul class="pagination justify-content-center">
-                <!-- Previous Button -->
                 {% if current_page > 1 %}
                 <li class="page-item">
                     <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=current_page - 1) }}" aria-label="Previous">
@@ -88,9 +89,14 @@
                 </li>
                 {% endif %}
 
-                <!-- Page Numbers -->
-                {% set start_page = [current_page - 3, 1] | max %}
-                {% set end_page = [current_page + 3, total_pages] | min %}
+                {% set start_page = current_page - 3 %}
+                {% if start_page < 1 %}
+                    {% set start_page = 1 %}
+                {% endif %}
+                {% set end_page = current_page + 3 %}
+                {% if total_pages is not none and end_page > total_pages %}
+                    {% set end_page = total_pages %}
+                {% endif %}
                 
                 {% if start_page > 1 %}
                 <li class="page-item">
@@ -116,7 +122,6 @@
                 </li>
                 {% endif %}
 
-                <!-- Next Button -->
                 {% if current_page < total_pages %}
                 <li class="page-item">
                     <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=current_page + 1) }}" aria-label="Next">

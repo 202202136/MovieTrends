@@ -1,11 +1,9 @@
-from repositories.movie_repository import MovieRepository
+from repositories.movie_repository import MovieRepository, save_user_watchlist
 from models.movie import Movie
-
 
 def get_movie_details(movie_id):
     data = MovieRepository.fetch_movie_by_id(movie_id)
     if data:
-        # Map TMDb response fields to the Movie model constructor
         movie = Movie(
             movie_id=data.get('id'),
             title=data.get('title') or data.get('name'),
@@ -18,13 +16,8 @@ def get_movie_details(movie_id):
         return movie
     return None
 
-
-
-
-
 def get_movie_trailer(movie_id):
     return MovieRepository.fetch_movie_trailer(movie_id)
-
 
 def get_tv_show_details(tv_id):
     data = MovieRepository.fetch_tv_by_id(tv_id)
@@ -41,7 +34,14 @@ def get_tv_show_details(tv_id):
         return movie
     return None
 
-
 def get_tv_show_trailer(tv_id):
     return MovieRepository.fetch_tv_trailer(tv_id)
 
+def add_to_watchlist(user_id, movie):
+    user = MovieRepository.get_user_by_id(user_id)
+    if user:
+        if movie not in user.watchlist:
+            user.watchlist.append(movie)
+            save_user_watchlist(user)
+            return True
+    return False
