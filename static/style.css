@@ -151,6 +151,46 @@
     border-bottom: 1px solid #dee2e6;
 }
 
+.add-to-watchlist-btn {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.add-to-watchlist-btn:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+}
+
+.add-to-watchlist-btn:active {
+    background-color: #1e7e34;
+}
+
+.remove-from-watchlist-btn {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.remove-from-watchlist-btn:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+}
+
+.remove-from-watchlist-btn:active {
+    background-color: #bd2130;
+}
+
 @media (max-width: 768px) {
     .filter-section .btn-group {
         display: flex;
@@ -195,4 +235,7 @@
 
 * {
     transition: opacity 0.3s ease, transform 0.3s ease;
+}
+body {
+    background-color: #f0f2f5;
 }

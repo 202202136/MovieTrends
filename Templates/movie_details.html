@@ -87,6 +87,11 @@
 
             <div class="mt-4">
                 <a href="/movies" class="btn btn-outline-light">Back to Movies</a>
+                <form action="/add_to_watchlist" method="POST" class="d-inline-block">
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                    <input type="hidden" name="movie_id" value="{{ movie.movie_id }}">
+                    <button type="submit" class="btn btn-primary ms-2">Add to Watchlist</button>
+                </form>
             </div>
         </div>
 
