@@ -1,3 +1,4 @@
+/* Card hover effect */
 .card {
     transition: transform 0.3s, box-shadow 0.3s;
 }
@@ -12,6 +13,7 @@
     object-fit: cover;
 }
 
+/*filter section styling*/
 .filter-section {
     background-color: #f8f9fa;
     padding: 20px;
@@ -19,6 +21,20 @@
     margin-bottom: 30px;
 }
 
+/* sorting styling */
+.sort-controls label {
+    font-weight: 600;
+    color: #343a40;
+}
+
+.sort-controls .form-select-sm {
+    width: 150px;
+}
+
+.sort-controls .btn {
+    height: calc(1.5em + .75rem + 2px);
+}
+/* Button group spacing */
 .btn-group .btn {
     margin: 0 5px;
 }
@@ -26,7 +42,7 @@
 .badge {
     font-size: 0.8em;
 }
-
+/* Card title truncation */
 .card-title {
     height: 48px;
     overflow: hidden;
@@ -37,31 +53,13 @@
     box-sizing: border-box;
 }
 
-#load-more-btn {
-    padding: 12px 40px;
-    font-size: 16px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    margin-top: 20px;
-    border-radius: 50px;
-}
-
-#load-more-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
-}
-
-#load-more-btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-}
-
+/* Spinner size adjustment */
 .spinner-border-sm {
     width: 1rem;
     height: 1rem;
     margin-left: 8px;
 }
-
+/* Fade-in animation for movie items */
 .movie-item {
     animation: fadeIn 0.5s ease-in;
 }
@@ -77,6 +75,7 @@
     }
 }
 
+/* Modal styling */
 .modal-content {
     border-radius: 10px;
 }
@@ -90,12 +89,14 @@
     padding: 1.5rem;
 }
 
+/* Active button styling */
 .filter-section .btn.active {
     background-color: #0d6efd;
     border-color: #0d6efd;
     color: white;
 }
 
+/* Search section styling */
 .search-section {
     max-width: 600px;
     margin: 0 auto 30px;
@@ -108,7 +109,7 @@
 .search-section .btn {
     border-radius: 0 20px 20px 0;
 }
-
+/* Favorite and View buttons active state */
 .favorite-btn.active {
     background-color: #dc3545;
     border-color: #dc3545;
@@ -125,6 +126,7 @@
     color: white;
 }
 
+/* Flex row movie card styling */
 .movie-card.flex-row {
     max-height: 200px;
 }
@@ -139,7 +141,7 @@
 .movie-card.flex-row .card-body {
     flex: 1;
 }
-
+/* Toast notification styling */
 .toast {
     min-width: 250px;
 }
