@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+<!-- Fix: include metadata fields in add-to-watchlist form and use session user_id fallback -->
 
 {% block content %}
 <div class="card bg-secondary text-light">
@@ -87,11 +88,25 @@
 
             <div class="mt-4">
                 <a href="/movies" class="btn btn-outline-light">Back to Movies</a>
-                <form action="/add_to_watchlist" method="POST" class="d-inline-block">
-                    <input type="hidden" name="user_id" value="{{ user.id }}">
-                    <input type="hidden" name="movie_id" value="{{ movie.movie_id }}">
-                    <button type="submit" class="btn btn-primary ms-2">Add to Watchlist</button>
+                {% if in_watchlist %}
+                    <form action="/remove_from_watchlist" method="POST" class="watchlist-action d-inline-block" data-action="remove">
+                    <input type="hidden" name="user_id" value="{{ user.id if user else session.get('user_id', 1) }}">
+                    <input type="hidden" name="movie_id" value="{{ movie.id }}">
+                    <input type="hidden" name="media_type" value="{{ movie.media_type or 'movie' }}">
+                    <button type="submit" class="btn btn-danger ms-2 watchlist-btn">Remove from Watchlist</button>
                 </form>
+                {% else %}
+                <form action="/add_to_watchlist" method="POST" class="watchlist-action d-inline-block" data-action="add">
+                    <input type="hidden" name="user_id" value="{{ user.id if user else session.get('user_id', 1) }}">
+                    <input type="hidden" name="movie_id" value="{{ movie.id }}">
+                    <input type="hidden" name="media_type" value="{{ movie.media_type or 'movie' }}">
+                    <input type="hidden" name="title" value="{{ movie.title }}">
+                    <input type="hidden" name="poster_path" value="{{ movie.poster_path }}">
+                    <input type="hidden" name="vote_average" value="{{ movie.vote_average or movie.rating }}">
+                    <input type="hidden" name="release_date" value="{{ movie.release_date or movie.first_air_date }}">
+                    <button type="submit" class="btn btn-primary ms-2 watchlist-btn">Add to Watchlist</button>
+                </form>
+                {% endif %}
             </div>
         </div>
 

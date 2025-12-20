@@ -14,17 +14,12 @@ def create_app():
     )
 
     app.secret_key = "csai203-secret"
-    app.register_blueprint(home_blueprint)
-    app.register_blueprint(movie_bp)  #routes in movie_controller are active
-    app.register_blueprint(auth)
-    
-    return app
-
-
+    # Ensure database tables exist before the app starts handling requests
     init_db()
 
     app.register_blueprint(home_blueprint)
-    app.register_blueprint(movie_bp)
+    app.register_blueprint(movie_bp)  # routes in movie_controller are active
+    app.register_blueprint(auth)
 
     return app
 

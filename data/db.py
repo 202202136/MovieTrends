@@ -1,6 +1,7 @@
 import sqlite3
 
-DB_PATH = "data/app.db"
+# Fix: switched DB to centralized data/database.db and create normalized tables
+DB_PATH = "data/database.db"
 
 def get_connection():
     connection = sqlite3.connect(DB_PATH)
@@ -23,6 +24,59 @@ def init_db():
         UNIQUE(user_id, tmdb_id, media_type)
     );
     """)
+
+    # Users table to store user accounts
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        UserID INTEGER PRIMARY KEY AUTOINCREMENT,
+        Email TEXT UNIQUE,
+        PasswordHash TEXT,
+        Username TEXT,
+        CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    # Categories table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS Category (
+        CategoryID INTEGER PRIMARY KEY AUTOINCREMENT,
+        Name TEXT UNIQUE
+    );
+    """)
+
+    # Movies table (normalized)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS Movie (
+        MovieID INTEGER PRIMARY KEY,
+        Title TEXT,
+        Overview TEXT,
+        Rating REAL,
+        ReleaseDate TEXT,
+        Category INTEGER,
+        PosterPath TEXT,
+        TrailerURL TEXT,
+        FOREIGN KEY(Category) REFERENCES Category(CategoryID)
+    );
+    """)
+
+    # WatchlistItem linking users to movies
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS WatchlistItem (
+        WatchlistItemID INTEGER PRIMARY KEY AUTOINCREMENT,
+        UserID INTEGER NOT NULL,
+        MovieID INTEGER NOT NULL,
+        DateAdded TEXT DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(UserID, MovieID),
+        FOREIGN KEY(UserID) REFERENCES users(UserID) ON DELETE CASCADE,
+        FOREIGN KEY(MovieID) REFERENCES Movie(MovieID) ON DELETE CASCADE
+    );
+    """)
+
+    # Ensure there is a default guest user with UserID=1
+    try:
+        cursor.execute("INSERT OR IGNORE INTO users(UserID, Username, Email) VALUES (1, 'guest', 'guest@example.com')")
+    except Exception:
+        pass
 
     connection.commit()
     connection.close()

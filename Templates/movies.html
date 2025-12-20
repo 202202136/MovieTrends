@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+<!-- Fix: added sorting controls and made watchlist forms include metadata and a session user_id fallback -->
 
 {% block content %}
 <div class="container-fluid">
@@ -59,11 +60,25 @@
                         </p>
                         <div class="d-flex justify-content-between align-items-center mt-auto">
                             <span class="badge bg-primary">Rating: {{ movie.vote_average }}</span>
-                            <form action="/add_to_watchlist" method="POST" class="d-inline-block">
-                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                            {% if movie.in_watchlist %}
+                            <form action="/remove_from_watchlist" method="POST" class="watchlist-action d-inline-block" data-action="remove">
+                                <input type="hidden" name="user_id" value="{{ user.id if user else session.get('user_id', 1) }}">
                                 <input type="hidden" name="movie_id" value="{{ movie.id }}">
-                                <button type="submit" class="btn btn-primary btn-sm">Add to Watchlist</button>
+                                <input type="hidden" name="media_type" value="{{ movie.media_type or 'movie' }}">
+                                <button type="submit" class="btn btn-danger btn-sm watchlist-btn">Remove from Watchlist</button>
                             </form>
+                            {% else %}
+                            <form action="/add_to_watchlist" method="POST" class="watchlist-action d-inline-block" data-action="add">
+                                <input type="hidden" name="user_id" value="{{ user.id if user else session.get('user_id', 1) }}">
+                                <input type="hidden" name="movie_id" value="{{ movie.id }}">
+                                <input type="hidden" name="media_type" value="{{ movie.media_type or 'movie' }}">
+                                <input type="hidden" name="title" value="{{ movie.title or movie.name }}">
+                                <input type="hidden" name="poster_path" value="{{ movie.poster_path }}">
+                                <input type="hidden" name="vote_average" value="{{ movie.vote_average }}">
+                                <input type="hidden" name="release_date" value="{{ movie.release_date or movie.first_air_date }}">
+                                <button type="submit" class="btn btn-primary btn-sm watchlist-btn">Add to Watchlist</button>
+                            </form>
+                            {% endif %}
                             {% if movie.media_type == 'tv' %}
                                 <a href="{{ url_for('movie_bp.tv_show_details', tv_show_id=movie.id) }}" class="btn btn-outline-primary btn-sm">Details</a>
                             {% else %}

@@ -42,7 +42,7 @@ def get_rating_summary(tmdb_id, media_type):
     cursor = connection.cursor()
 
     cursor.execute("""
-        SELECT AVG(rating_value) AS avg_rating, COUNT(*) AS cnt
+        SELECT AVG(rating_value) AS avg_rating, COUNT(*) AS count
         FROM ratings
         WHERE tmdb_id = ? AND media_type = ?
     """, (tmdb_id, media_type))
@@ -50,6 +50,9 @@ def get_rating_summary(tmdb_id, media_type):
     row = cursor.fetchone()
     connection.close()
 
+    if not row:
+        return 0.0, 0
+
     avg_rating = float(row["avg_rating"]) if row["avg_rating"] is not None else 0.0
-    count = int(row["count"])
+    count = int(row["count"]) if row["count"] is not None else 0
     return avg_rating, count

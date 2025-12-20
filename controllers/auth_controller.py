@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
+from data.db import get_connection
 import services.auth_service
 
+# Fix: store numeric `session['user_id']` on login to scope watchlist/ratings per user
 auth = Blueprint("auth", __name__)
 authService = services.auth_service.AuthService()
 
@@ -9,7 +11,19 @@ def login():
     error = None
     if request.method == "POST":
         if authService.authenticate(request.form["email"], request.form["password"]):
-            session["user"] = request.form["email"]
+            email = request.form["email"]
+            session["user"] = email
+            # lookup numeric user id from centralized DB and store in session
+            try:
+                conn = get_connection()
+                cur = conn.cursor()
+                cur.execute("SELECT UserID FROM users WHERE Email = ?", (email,))
+                row = cur.fetchone()
+                if row:
+                    session['user_id'] = int(row['UserID'])
+                conn.close()
+            except Exception:
+                pass
             return redirect(url_for("home.home"))
         else:
             error = "Invalid email or password"
