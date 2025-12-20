@@ -1,3 +1,4 @@
+
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from services.movie_service import get_movie_details, get_movie_trailer, get_tv_show_trailer, get_tv_show_details
 from repositories.movie_repository import (
@@ -7,6 +8,9 @@ from repositories.movie_repository import (
     get_movie_category,
     get_user_by_id,
 )
+from datetime import datetime
+from repositories.rating_repository import get_user_rating, upsert_rating, get_rating_summary
+
 
 movie_bp = Blueprint("movie_bp", __name__)
 
@@ -31,26 +35,116 @@ def movies():
         total_pages = int(total_pages) if total_pages is not None else 1
     except (TypeError, ValueError):
         total_pages = 1
+    category = request.args.get('category', '').strip() or None
+    page = int(request.args.get('page', 1))
+    # Sorting parameters: sort by rating | release_date | popularity
+    sort = request.args.get('sort', '').strip() or None
+    order = request.args.get('order', 'desc')
+    
+    # Fetch movies for the given category and page
+    results, total_pages = get_movie_category(category, page)
+    # Apply optional sorting server-side for flexibility and compatibility
+    def _get_field(item, keys):
+        # support dicts and objects
+        for k in keys:
+            try:
+                val = getattr(item, k)
+            except Exception:
+                val = None
+            if val is None and isinstance(item, dict):
+                val = item.get(k)
+            if val is not None:
+                return val
+        return None
 
-    return render_template(
-        "movies.html",
-        movies=results,
-        category=category or '',
-        current_page=page,
-        total_pages=total_pages,
-    )
+    if sort:
+        reverse = (order == 'desc')
+        if sort == 'rating':
+            keyfn = lambda m: float(_get_field(m, ['vote_average', 'rating']) or 0)
+        elif sort == 'release_date':
+            def keyfn(m):
+                s = _get_field(m, ['release_date', 'first_air_date'])
+                if not s:
+                    return datetime.min
+                try:
+                    return datetime.strptime(s, '%Y-%m-%d')
+                except Exception:
+                    return datetime.min
+        elif sort == 'popularity':
+            keyfn = lambda m: float(_get_field(m, ['popularity']) or 0)
+        else:
+            keyfn = None
+
+        if keyfn:
+            try:
+                results = sorted(results, key=keyfn, reverse=reverse)
+            except Exception:
+                # If sorting fails, leave original order
+                pass
+    
+    return render_template("movies.html", 
+                         movies=results, 
+                         category=category or '',
+                         current_page=page,
+                         total_pages=total_pages,
+                         sort=sort or '')#added sort to template context
 
 @movie_bp.route("/movie/<int:movie_id>")
 def movie_details(movie_id):
     movie = get_movie_details(movie_id)
     trailer_key = get_movie_trailer(movie_id)
-    return render_template("movie_details.html", movie=movie, trailer_key=trailer_key)
+    user_id = session.get("user_id", 1)
+    my_rating = get_user_rating(user_id, movie_id, "movie")
+    avg_rating, ratings_count = get_rating_summary(movie_id, "movie")
+
+    return render_template(
+        "movie_details.html",
+        movie=movie,
+        trailer_key=trailer_key,
+        my_rating=my_rating,
+        avg_rating=avg_rating,
+        ratings_count=ratings_count
+    )
 
 @movie_bp.route("/tv/<int:tv_show_id>")
 def tv_show_details(tv_show_id):
     tv_show = get_tv_show_details(tv_show_id)
     trailer_key = get_tv_show_trailer(tv_show_id)
-    return render_template("movie_details.html", movie=tv_show, trailer_key=trailer_key)
+    user_id = session.get("user_id", 1)
+    my_rating = get_user_rating(user_id, tv_show_id, "tv")
+    avg_rating, ratings_count = get_rating_summary(tv_show_id, "tv")
+
+    return render_template(
+        "movie_details.html",
+        movie=tv_show,
+        trailer_key=trailer_key,
+        my_rating=my_rating,
+        avg_rating=avg_rating,
+        ratings_count=ratings_count
+    )
+
+@movie_bp.route("/rate/<media_type>/<int:tmdb_id>", methods=["POST"])
+def save_rating(media_type, tmdb_id):
+    if media_type not in ("movie", "tv"):
+        return redirect(url_for("home.home"))
+
+    user_id = session.get("user_id", 1)
+
+    try:
+        rating_value = float(request.form.get("rating", "0"))
+    except ValueError:
+        rating_value = 0.0
+
+    if rating_value < 0:
+        rating_value = 0.0
+    if rating_value > 10:
+        rating_value = 10.0
+
+    upsert_rating(user_id, tmdb_id, media_type, rating_value)
+
+    if media_type == "tv":
+        return redirect(url_for("movie_bp.tv_show_details", tv_show_id=tmdb_id))
+    return redirect(url_for("movie_bp.movie_details", movie_id=tmdb_id))
 
 @movie_bp.route("/search")
 def search():
@@ -133,4 +227,4 @@ def add_to_watchlist_route():
         # persist
         MovieRepository.save_user_watchlist(user)
 
-    return redirect(url_for('movie_bp.movies'))
+    return jsonify({'movies': results, 'page': page, 'has_more': False})

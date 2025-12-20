@@ -4,20 +4,27 @@
 <div class="container-fluid">
     <div class="filter-section mb-4 p-3 bg-light rounded">
         <h2 class="mb-3">Filter by Category</h2>
-        <form method="GET" action="/movies" class="d-flex gap-2 flex-wrap">
-            <button type="submit" name="category" value="" class="btn btn-outline-primary {% if not category or category == '' %}active{% endif %}">
-                All
-            </button>
-            <button type="submit" name="category" value="Movie" class="btn btn-outline-primary {% if category == 'Movie' %}active{% endif %}">
-                Movies
-            </button>
-            <button type="submit" name="category" value="Series" class="btn btn-outline-primary {% if category == 'Series' %}active{% endif %}">
-                TV Series
-            </button>
-            <button type="submit" name="category" value="Cartoon" class="btn btn-outline-primary {% if category == 'Cartoon' %}active{% endif %}">
-                Cartoons
-            </button>
-        </form>
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <div class="btn-group" role="group" aria-label="category filters">
+                <a href="{{ url_for('movie_bp.movies', category='', sort=sort, order=order) }}" class="btn btn-outline-primary {% if not category or category == '' %}active{% endif %}">All</a>
+                <a href="{{ url_for('movie_bp.movies', category='Movie', sort=sort, order=order) }}" class="btn btn-outline-primary {% if category == 'Movie' %}active{% endif %}">Movies</a>
+                <a href="{{ url_for('movie_bp.movies', category='Series', sort=sort, order=order) }}" class="btn btn-outline-primary {% if category == 'Series' %}active{% endif %}">TV Series</a>
+                <a href="{{ url_for('movie_bp.movies', category='Cartoon', sort=sort, order=order) }}" class="btn btn-outline-primary {% if category == 'Cartoon' %}active{% endif %}">Cartoons</a>
+            </div>
+
+            <!-- Sorting controls (separate form so selects submit) -->
+            <form method="GET" action="/movies" class="ms-auto d-flex align-items-center sort-controls">
+                <input type="hidden" name="category" value="{{ category or '' }}">
+                <label class="me-2 mb-0">Sort:</label>
+                <select name="sort" class="form-select form-select-sm me-2" onchange="this.form.submit()">
+                    <option value="" {% if not sort %}selected{% endif %}>Default</option>
+                    <option value="rating" {% if sort == 'rating' %}selected{% endif %}>Rating</option>
+                    <option value="release_date" {% if sort == 'release_date' %}selected{% endif %}>Release Date</option>
+                    <option value="popularity" {% if sort == 'popularity' %}selected{% endif %}>Popularity</option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+            </form>
+        </div>
     </div>
 
     <div class="movies-section">
@@ -79,7 +86,7 @@
             <ul class="pagination justify-content-center">
                 {% if current_page > 1 %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=current_page - 1) }}" aria-label="Previous">
+                    <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=current_page - 1, sort=sort, order=order) }}" aria-label="Previous">
                         <span aria-hidden="true">&laquo;</span>
                     </a>
                 </li>
@@ -109,7 +116,7 @@
 
                 {% for p in range(start_page, end_page + 1) %}
                 <li class="page-item {% if p == current_page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=p) }}">{{ p }}</a>
+                    <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=p, sort=sort, order=order) }}">{{ p }}</a>
                 </li>
                 {% endfor %}
 
@@ -118,13 +125,13 @@
                 <li class="page-item disabled"><span class="page-link">...</span></li>
                 {% endif %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=total_pages) }}">{{ total_pages }}</a>
+                    <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=total_pages, sort=sort, order=order) }}">{{ total_pages }}</a>
                 </li>
                 {% endif %}
 
                 {% if current_page < total_pages %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=current_page + 1) }}" aria-label="Next">
+                    <a class="page-link" href="{{ url_for('movie_bp.movies', category=category or '', page=current_page + 1, sort=sort, order=order) }}" aria-label="Next">
                         <span aria-hidden="true">&raquo;</span>
                     </a>
                 </li>
