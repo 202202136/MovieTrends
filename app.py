@@ -1,9 +1,9 @@
 from flask import Flask
 
 from controllers.home_controller import home_blueprint
-from controllers.movie_controller import movie_bp
-
 from data.db import init_db
+from controllers.movie_controller import movie_bp  #routes in movie_controller are active
+from controllers.auth_controller import auth
 
 
 def create_app():
@@ -14,6 +14,12 @@ def create_app():
     )
 
     app.secret_key = "csai203-secret"
+    app.register_blueprint(home_blueprint)
+    app.register_blueprint(movie_bp)  #routes in movie_controller are active
+    app.register_blueprint(auth)
+    
+    return app
+
 
     init_db()
 
