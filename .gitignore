@@ -1,6 +1,3 @@
 # Ignore database files and env
-data/database.db
-.env
 __pycache__/
 *.pyc
-users.json

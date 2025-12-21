@@ -191,6 +191,7 @@ class MovieRepository:
             )
             items = []
             for r in cur.fetchall():
+                media_type = r['CategoryName'] if r['CategoryName'] else ('tv' if r['ReleaseDate'] is None else 'movie')
                 items.append({
                     'id': r['MovieID'],
                     'title': r['Title'],
@@ -198,6 +199,7 @@ class MovieRepository:
                     'vote_average': r['Rating'],
                     'release_date': r['ReleaseDate'],
                     'category': r['CategoryName'],
+                    'media_type': media_type,
                 })
 
             user['watchlist'] = items
@@ -363,7 +365,7 @@ class MovieRepository:
         try:
             conn = get_connection()
             cur = conn.cursor()
-            cur.execute("SELECT MovieID, Title, Overview, Rating, ReleaseDate, Category, PosterPath, TrailerURL FROM Movie WHERE MovieID = ?", (tmdb_id,))
+            cur.execute("SELECT m.MovieID, m.Title, m.Overview, m.Rating, m.ReleaseDate, m.Category, m.PosterPath, m.TrailerURL, c.Name as MediaType FROM Movie m LEFT JOIN Category c ON m.Category = c.CategoryID WHERE m.MovieID = ?", (tmdb_id,))
             r = cur.fetchone()
             conn.close()
             if not r:
@@ -376,6 +378,7 @@ class MovieRepository:
                 'release_date': r['ReleaseDate'],
                 'poster_path': r['PosterPath'],
                 'trailer_url': r['TrailerURL'],
+                'media_type': r['MediaType']
             }
         except Exception:
             return None

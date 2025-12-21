@@ -286,36 +286,40 @@ def add_to_watchlist_route():
         movie_id = movie_id_raw
 
     user = get_user_by_id(user_id)
-    # fetch movie data via repository (try movie endpoint then tv endpoint if media_type suggests)
+    # Build metadata from the submitted form (prefer form values to avoid TMDb mismatches)
+    title = request.form.get('title') or request.form.get('name')
+    poster = request.form.get('poster_path')
+    vote = request.form.get('vote_average')
+    release = request.form.get('release_date')
+    provided_meta = None
+    if title or poster or vote or release:
+        provided_meta = {
+            'id': movie_id,
+            'title': title,
+            'poster_path': poster,
+            'vote_average': float(vote) if vote else None,
+            'release_date': release,
+            'media_type': (media_type_raw or request.form.get('media_type') or '').lower() or None
+        }
+
+    # fetch movie data via repository using explicit media_type when present
     movie_data = None
-    media_type = (media_type_raw or '').lower() if media_type_raw else None
+    media_type = (media_type_raw or '').lower() if media_type_raw else (provided_meta.get('media_type') if provided_meta else None)
     if media_type == 'tv':
         movie_data = MovieRepository.fetch_tv_by_id(movie_id)
-    else:
+    elif media_type == 'movie':
         movie_data = MovieRepository.fetch_movie_by_id(movie_id)
-        # fallback: if movie fetch fails and media_type is unspecified, try tv
-        if not movie_data and not media_type:
+    else:
+        # try local DB first (fast) then TMDb movie then tv
+        movie_data = MovieRepository.get_movie_by_tmdb_id(movie_id)
+        if not movie_data:
+            movie_data = MovieRepository.fetch_movie_by_id(movie_id)
+        if not movie_data:
             movie_data = MovieRepository.fetch_tv_by_id(movie_id)
 
-    # If TMDb fetch failed, try to pull a saved Movie record or build from provided form metadata
-    if not movie_data:
-        # try local Movie table
-        movie_data = MovieRepository.get_movie_by_tmdb_id(movie_id)
-    if not movie_data:
-        # attempt to construct from submitted form fields (title/poster_path/vote_average/release_date)
-        title = request.form.get('title') or request.form.get('name')
-        poster = request.form.get('poster_path')
-        vote = request.form.get('vote_average')
-        release = request.form.get('release_date')
-        if title or poster or vote or release:
-            movie_data = {
-                'id': movie_id,
-                'title': title,
-                'poster_path': poster,
-                'vote_average': float(vote) if vote else None,
-                'release_date': release,
-                'media_type': media_type or request.form.get('media_type')
-            }
+    # If still not found, prefer provided metadata
+    if not movie_data and provided_meta:
+        movie_data = provided_meta
 
     if not user:
         return jsonify({"error": "User not found"}), 400
@@ -326,25 +330,43 @@ def add_to_watchlist_route():
     if 'watchlist' not in user or not isinstance(user.get('watchlist'), list):
         user['watchlist'] = []
 
-    # Avoid duplicates (compare by id)
-    movie_id_val = movie_data.get('id')
-    exists = any((isinstance(item, dict) and item.get('id') == movie_id_val) or (item == movie_id_val) for item in user['watchlist'])
+    # Avoid duplicates (compare by id) - coerce to int where possible
+    def _coerce_id(x):
+        try:
+            return int(x)
+        except Exception:
+            return x
+
+    movie_id_val = movie_data.get('id') if isinstance(movie_data, dict) else movie_id
+    movie_id_val = _coerce_id(movie_id_val)
+    exists = False
+    for item in user.get('watchlist', []):
+        candidate = None
+        if isinstance(item, dict):
+            candidate = _coerce_id(item.get('id'))
+        else:
+            candidate = _coerce_id(item)
+        if candidate == movie_id_val:
+            exists = True
+            break
     if not exists:
-        # keep a lightweight entry in watchlist (id + title)
-        user['watchlist'].append({
+        # keep a lightweight entry in watchlist (id + title + media_type)
+        entry = {
             'id': movie_id_val,
             'title': movie_data.get('title') or movie_data.get('name'),
             'poster_path': movie_data.get('poster_path'),
             'vote_average': movie_data.get('vote_average'),
             'release_date': movie_data.get('release_date') or movie_data.get('first_air_date'),
-            'media_type': movie_data.get('media_type') or ('tv' if movie_data.get('first_air_date') else 'movie')
-        })
+            'media_type': (movie_data.get('media_type') or ('tv' if movie_data.get('first_air_date') else 'movie')) if isinstance(movie_data, dict) else (media_type or 'movie')
+        }
+        user['watchlist'].append(entry)
         # persist
         ok = MovieRepository.save_user_watchlist(user)
         if not ok:
             return jsonify({'error': 'Failed to save watchlist'}), 500
 
-    return jsonify({'success': True, 'message': 'Added to watchlist'})
+    # Return the actual added item for client confirmation
+    return jsonify({'success': True, 'message': 'Added to watchlist', 'item': entry})
 
 
 @movie_bp.route('/remove_from_watchlist', methods=['POST'])
@@ -389,8 +411,23 @@ def watchlist():
         try:
             mid = item.get('id') if isinstance(item, dict) else item
             if isinstance(item, dict):
+                # Prefer media_type stored on the watchlist item; if absent, try the local Movie table
+                media_type = item.get('media_type')
+                if not media_type:
+                    local = MovieRepository.get_movie_by_tmdb_id(mid)
+                    media_type = local.get('media_type') if local else None
+
                 if not item.get('poster_path'):
-                    data = MovieRepository.fetch_movie_by_id(mid)
+                    # fetch from TMDb using correct endpoint based on media_type when possible
+                    data = None
+                    if media_type == 'tv':
+                        data = MovieRepository.fetch_tv_by_id(mid)
+                    else:
+                        data = MovieRepository.fetch_movie_by_id(mid)
+                        # fallback to tv
+                        if not data:
+                            data = MovieRepository.fetch_tv_by_id(mid)
+
                     if data:
                         item.setdefault('poster_path', data.get('poster_path'))
                         item.setdefault('vote_average', data.get('vote_average'))
